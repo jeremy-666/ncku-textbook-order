@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>選擇系所｜成大教科書預訂</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page active selection-page">
+      <header class="topbar">
+        <span class="mini-brand"><span class="brand-icon">成</span><span class="brand-copy">成大學生會 × 麗文書局<br />教科書預訂</span></span>
+        <button class="link-button" type="button" data-signout>登出</button>
+      </header>
+      <div class="content-wrap">
+        <p class="eyebrow">完成基本資料</p>
+        <h2>先告訴我們你的系所與年級</h2>
+        <p class="muted">可由清單選擇，或輸入關鍵字搜尋系所。</p>
+        <p id="accountLine" class="muted account-line"></p>
+
+        <div id="statusBanner" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+        <form id="profileForm" class="selection-card" novalidate>
+          <div class="field-block">
+            <label for="department">你的系所</label>
+            <input id="department" name="department" list="departmentList" placeholder="搜尋系所，例如：醫、資、電" required />
+            <datalist id="departmentList"></datalist>
+            <p class="hint">輸入「醫」可找到醫學系；輸入「資」可找到資訊工程學系、資源工程學系。</p>
+          </div>
+          <div class="field-block">
+            <label for="grade">你的年級</label>
+            <select id="grade" name="grade" required>
+              <option value="" selected disabled>請選擇年級</option>
+            </select>
+          </div>
+          <button id="saveButton" class="primary-button continue-button" type="submit">儲存並繼續 →</button>
+        </form>
+      </div>
+    </main>
+
+    <script type="module" src="js/onboarding.js"></script>
+    <script src="availability.js"></script>
+  </body>
+</html>
