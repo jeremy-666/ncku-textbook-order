@@ -126,6 +126,10 @@ describe('row level security', { skip }, () => {
         throw new Error(`Migration incomplete: ${fn}() is missing from ${URL} (${error.message}).`);
       }
     }
+    const privilegeProbe = await service.rpc('assert_api_function_privileges');
+    if (privilegeProbe.error) {
+      throw new Error(`Migration privilege drift detected: ${privilegeProbe.error.code} ${privilegeProbe.error.message}`);
+    }
 
     await Promise.all(
       [
@@ -771,6 +775,20 @@ describe('row level security', { skip }, () => {
         `${actor}: expected EXECUTE to be missing, got ${describeResult(result)}`
       );
     }
+  });
+
+  test('an anonymous caller cannot execute any privileged RPC', async () => {
+    const client = anonymous();
+    const calls = [
+      ['record_student_verification', { p_user_id: users.studentA, p_email: tag('studentA'), p_google_sub: `anon-${run}` }],
+      ['lookup_student_for_assignment', { p_email: tag('studentA') }],
+      ['set_student_active', { p_student_user_id: users.studentA, p_active: false, p_reason: 'forged' }],
+    ];
+    for (const [fn, args] of calls) {
+      expect.privilege(await client.rpc(fn, args), `${fn} anonymous execution`);
+    }
+    const profile = await service.from('student_profiles').select('is_active').eq('user_id', users.studentA).single();
+    assert.equal(profile.data?.is_active, true, 'anonymous RPC attempts leave no state change');
   });
 
   test('the verification RPC binds one Google subject to one account', async () => {

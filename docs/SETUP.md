@@ -42,15 +42,15 @@ supabase link --project-ref YOUR-PROJECT-REF
 supabase db push
 ```
 
-Or paste `supabase/migrations/20260823000100_auth_core.sql` then
-`20260823000200_rls.sql` into the dashboard SQL editor, in that order.
+Or apply **every** file in `supabase/migrations/` through the dashboard SQL
+editor, in filename order. Do not omit later remediation migrations.
 
 After running them, check **Database → Tables**: all six tables must show
 "RLS enabled". If any does not, stop and fix it before going further.
 
 ### Ownership matters here
 
-Apply both files **as the same role**, and let that role be Supabase's
+Apply all migration files **as the same role**, and let that role be Supabase's
 `postgres` (which is what `supabase db push` and the dashboard SQL editor both
 use). The migrations create SECURITY DEFINER helpers that run as their owner,
 and `20260823000200_rls.sql` creates policies for `current_user` so those

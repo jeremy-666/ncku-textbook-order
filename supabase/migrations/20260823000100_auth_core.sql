@@ -554,8 +554,11 @@ declare
   v_result   public.student_profiles;
   v_owner    uuid;
 begin
-  -- Empty jwt_role() is direct SQL (psql / migration), which is trusted.
-  if public.jwt_role() not in ('service_role', '') then
+  -- Direct SQL is trusted only when it is not executing as an API role.
+  if not (
+    public.jwt_role() = 'service_role'
+    or (public.jwt_role() = '' and current_user not in ('anon', 'authenticated'))
+  ) then
     raise exception 'record_student_verification is a service-role operation'
       using errcode = '42501';
   end if;
@@ -647,7 +650,11 @@ declare
   v_before public.student_profiles;
   v_after  public.student_profiles;
 begin
-  if not (public.jwt_role() in ('service_role', '') or public.is_admin_owner_for('student_union')) then
+  if not (
+    public.jwt_role() = 'service_role'
+    or public.is_admin_owner_for('student_union')
+    or (public.jwt_role() = '' and current_user not in ('anon', 'authenticated'))
+  ) then
     raise exception 'student activation is restricted to student_union owners'
       using errcode = '42501';
   end if;
@@ -683,11 +690,22 @@ begin
   return v_after;
 end $fn$;
 
-revoke all on function public.record_student_verification(uuid, text, text) from public;
-revoke all on function public.lookup_student_for_assignment(text)           from public;
-revoke all on function public.set_student_active(uuid, boolean, text)       from public;
+-- Supabase can grant EXECUTE directly to API roles through default privileges.
+-- Remove those grants from every function created above, then expose only the
+-- functions needed by RLS or the intended RPC callers.
+revoke execute on all functions in schema public from public, anon, authenticated;
 
--- The verification RPC is never reachable from a browser session.
-grant execute on function public.record_student_verification(uuid, text, text) to service_role;
-grant execute on function public.lookup_student_for_assignment(text)           to authenticated;
-grant execute on function public.set_student_active(uuid, boolean, text)       to authenticated, service_role;
+grant execute on function public.current_admin_org()                                      to authenticated;
+grant execute on function public.is_active_admin()                                       to authenticated;
+grant execute on function public.is_active_admin_for(public.admin_organization)          to authenticated;
+grant execute on function public.is_admin_owner_for(public.admin_organization)           to authenticated;
+grant execute on function public.is_verified_student()                                   to authenticated;
+grant execute on function public.has_form_assignment(uuid)                               to authenticated;
+grant execute on function public.form_accepts_submissions(uuid)                          to authenticated;
+grant execute on function public.admin_can_access_form(uuid)                             to authenticated;
+grant execute on function public.admin_owns_form(uuid)                                   to authenticated;
+grant execute on function public.admin_shares_student(uuid)                              to authenticated;
+grant execute on function public.privileged_student_ctx()                                to authenticated;
+grant execute on function public.lookup_student_for_assignment(text)                     to authenticated;
+grant execute on function public.set_student_active(uuid, boolean, text)                 to authenticated, service_role;
+grant execute on function public.record_student_verification(uuid, text, text)           to service_role;

@@ -26,6 +26,9 @@ import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 const MIGRATIONS = [
   '../../supabase/migrations/20260823000100_auth_core.sql',
   '../../supabase/migrations/20260823000200_rls.sql',
+  '../../supabase/migrations/20260823000300_revoke_verification_rpc.sql',
+  '../../supabase/migrations/20260823000400_harden_function_privileges.sql',
+  '../../supabase/migrations/20260823000500_revoke_privilege_probe_public.sql',
 ];
 
 export const OWNER_MODES = ['superuser', 'plain'];
@@ -71,6 +74,9 @@ export async function createHarness({ ownerMode = 'superuser' } = {}) {
   }
 
   await db.exec(`set role ${owner};`);
+  // Supabase installs direct API-role EXECUTE defaults for newly created
+  // functions. The migrations must revoke these explicitly, not merely PUBLIC.
+  await db.exec(`alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;`);
   for (const relative of MIGRATIONS) {
     const sql = await readFile(fileURLToPath(new URL(relative, import.meta.url)), 'utf8');
     await db.exec(sql);
@@ -117,6 +123,21 @@ export async function createHarness({ ownerMode = 'superuser' } = {}) {
       } finally {
         await db.exec('reset role;');
         await db.query('select set_config($1, $2, false)', ['request.jwt.claims', '']);
+      }
+    },
+
+    /** API role with no JWT claims: models an unauthenticated PostgREST call. */
+    async asWithoutClaims(role, sql, params = []) {
+      await db.exec(`set role ${role};`);
+      await db.query("select set_config('request.jwt.claims', '{}', false)");
+      try {
+        const result = await db.query(sql, params);
+        return { rows: result.rows, error: null };
+      } catch (error) {
+        return { rows: [], error: normalize(error) };
+      } finally {
+        await db.exec('reset role;');
+        await db.query("select set_config('request.jwt.claims', '{}', false)");
       }
     },
 

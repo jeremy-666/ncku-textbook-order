@@ -678,6 +678,20 @@ for (const ownerMode of OWNER_MODES) {
       assert.ok(DENIAL.privilege(result.error), `expected EXECUTE to be missing, got ${result.error?.message}`);
     });
 
+    test('anonymous callers cannot execute any RPC, including with absent claims', async () => {
+      const calls = [
+        ['record_student_verification', 'select public.record_student_verification($1,$2,$3)', [h.id('studentA'), 'studentA@gs.ncku.edu.tw', 'forged-sub']],
+        ['lookup_student_for_assignment', 'select * from public.lookup_student_for_assignment($1)', ['studentA@gs.ncku.edu.tw']],
+        ['set_student_active', 'select public.set_student_active($1,false,$2)', [h.id('studentA'), 'unauthenticated attacker']],
+      ];
+      for (const [name, sql, params] of calls) {
+        const result = await h.asWithoutClaims('anon', sql, params);
+        assert.ok(DENIAL.privilege(result.error), `${name}: anonymous EXECUTE must be absent`);
+      }
+      const unchanged = await h.priv('select is_active from public.student_profiles where user_id = $1', [h.id('studentA')]);
+      assert.equal(unchanged[0].is_active, true);
+    });
+
     test('the verification RPC binds one Google subject to one account', async () => {
       const created = await h.as('service_role', null, 'select ncku_verified from public.record_student_verification($1,$2,$3)', [
         h.id('nobody'),
