@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>管理後台｜成大教科書預訂</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="page active admin-page">
+      <header class="topbar">
+        <span class="mini-brand"><span class="brand-icon">成</span><span class="brand-copy">教科書預訂<br />管理後台</span></span>
+        <span id="adminIdentity" class="admin-identity"></span>
+        <button class="link-button" type="button" data-signout>登出</button>
+      </header>
+
+      <div class="content-wrap admin-wrap">
+        <div id="statusBanner" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+        <section class="admin-section">
+          <h2>表單</h2>
+          <form id="createFormForm" class="inline-form">
+            <input id="newFormTitle" type="text" placeholder="表單名稱" required />
+            <span id="newFormOrganization" class="hint"></span>
+            <button class="primary-button" type="submit">新增表單</button>
+          </form>
+          <p class="hint">表單只會建立在您所屬的單位底下，也只有該單位的管理員看得到。</p>
+          <div id="formsTable" class="admin-table" aria-busy="true">載入中…</div>
+        </section>
+
+        <section class="admin-section" id="detailSection" hidden>
+          <h2 id="detailTitle">表單細節</h2>
+
+          <h3>題目定義（JSON）</h3>
+          <p class="hint">格式：<code>[{"key":"book1","label":"教科書名稱","type":"text","required":true}]</code>，type 可為 text / textarea / number / select / checkbox。</p>
+          <textarea id="fieldsEditor" rows="8" spellcheck="false"></textarea>
+          <div class="button-row">
+            <select id="formStatus">
+              <option value="draft">準備中</option>
+              <option value="open">開放中</option>
+              <option value="closed">已截止</option>
+            </select>
+            <button id="saveFormButton" class="primary-button" type="button">儲存表單</button>
+          </div>
+
+          <h3>指派學生</h3>
+          <form id="assignForm" class="inline-form">
+            <input id="assignEmail" type="email" placeholder="學生 gs.ncku.edu.tw Email" required />
+            <button class="ghost-button" type="submit">指派</button>
+          </form>
+          <div id="assignmentsTable" class="admin-table"></div>
+
+          <h3>預訂結果</h3>
+          <div id="submissionsTable" class="admin-table"></div>
+        </section>
+
+        <section class="admin-section" id="adminsSection" hidden>
+          <h2>管理員</h2>
+          <p class="hint">
+            先在 Supabase Dashboard → Authentication 建立管理員帳號，再把該帳號的 User ID 填入下方。
+            系統不提供公開註冊，也不使用共用密碼。
+          </p>
+          <form id="addAdminForm" class="inline-form">
+            <input id="adminUserId" type="text" placeholder="Supabase User ID (UUID)" required />
+            <input id="adminDisplayName" type="text" placeholder="顯示名稱" required />
+            <select id="adminRole">
+              <option value="editor">editor</option>
+              <option value="owner">owner</option>
+            </select>
+            <button class="primary-button" type="submit">新增管理員</button>
+          </form>
+          <div id="adminsTable" class="admin-table"></div>
+        </section>
+
+        <section class="admin-section" id="suspensionSection" hidden>
+          <h2>學生帳號狀態</h2>
+          <p class="hint">
+            停用後該學生立即失去所有表單與預訂資料的存取權，重新用 Google 登入也不會恢復。
+            此操作僅限學生會 owner，且會記錄在稽核紀錄中。
+          </p>
+          <form id="suspensionForm" class="inline-form">
+            <input id="suspendEmail" type="email" placeholder="學生 gs.ncku.edu.tw Email" required />
+            <input id="suspendReason" type="text" placeholder="原因（選填）" />
+            <button id="suspendButton" class="ghost-button danger" type="submit">停用</button>
+            <button id="reactivateButton" class="ghost-button" type="button">恢復</button>
+          </form>
+        </section>
+
+        <section class="admin-section">
+          <h2>稽核紀錄</h2>
+          <div id="auditTable" class="admin-table"></div>
+        </section>
+      </div>
+    </main>
+
+    <script type="module" src="js/admin.js"></script>
+  </body>
+</html>

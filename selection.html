@@ -3,44 +3,30 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>選擇系所｜成大教科書預訂</title>
+    <title>我的預訂表單｜成大教科書預訂</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="page active selection-page">
       <header class="topbar">
-        <a class="mini-brand" href="index.html"><span class="brand-icon">成</span><span class="brand-copy">成大學生會 × 麗文書局<br />教科書預訂</span></a>
+        <span class="mini-brand"><span class="brand-icon">成</span><span class="brand-copy">成大學生會 × 麗文書局<br />教科書預訂</span></span>
+        <button class="link-button" type="button" data-signout>登出</button>
       </header>
       <div class="content-wrap">
-        <p class="eyebrow">STEP 1 OF 2</p>
-        <h2>先告訴我們你的系所與年級</h2>
-        <p class="muted">可由清單選擇，或輸入關鍵字搜尋系所。</p>
-        <form class="selection-card" action="form.html">
-          <div class="field-block">
-            <label for="department">你的系所</label>
-            <input id="department" name="department" list="departmentList" placeholder="搜尋系所，例如：醫、資、電" required />
-            <datalist id="departmentList">
-              <option value="資訊工程學系"></option>
-              <option value="電機工程學系"></option>
-              <option value="醫學系"></option>
-              <option value="物理治療系"></option>
-              <option value="資源工程學系"></option>
-            </datalist>
-            <p class="hint">輸入「醫」可找到醫學系；輸入「資」可找到資訊工程學系、資源工程學系。</p>
-          </div>
-          <div class="field-block">
-            <label for="gradeFallback">你的年級</label>
-            <select id="gradeFallback" name="grade" required>
-              <option value="" selected disabled>請選擇年級</option>
-              <option>一年級</option><option>二年級</option><option>三年級</option><option>四年級</option>
-              <option>五年級</option><option>六年級</option><option>研究所</option>
-            </select>
-          </div>
-          <button class="primary-button continue-button" type="submit">繼續填寫預訂單 →</button>
-        </form>
+        <p class="eyebrow">我的預訂</p>
+        <h2>指派給你的表單</h2>
+        <p id="profileLine" class="muted account-line"></p>
+        <p class="muted"><a href="onboarding.html">修改系所與年級</a></p>
+
+        <div id="statusBanner" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+        <div id="formList" class="form-list" aria-busy="true">
+          <p class="muted">載入中…</p>
+        </div>
       </div>
     </main>
-    <script src="selection.js"></script>
+
+    <script type="module" src="js/student-forms.js"></script>
     <script src="availability.js"></script>
   </body>
 </html>

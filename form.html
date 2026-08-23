@@ -10,17 +10,26 @@
     <main class="page active form-page">
       <header class="topbar">
         <a class="mini-brand" href="selection.html"><span class="brand-icon">成</span><span class="brand-copy">成大學生會 × 麗文書局<br />教科書預訂</span></a>
+        <button class="link-button" type="button" data-signout>登出</button>
       </header>
       <div class="content-wrap form-wrap">
-        <p class="eyebrow">STEP 2 OF 2</p>
-        <h2>教科書預訂表單</h2>
-        <div class="form-placeholder">
-          <div class="placeholder-icon" aria-hidden="true">▤</div>
-          <h3>在這裡放入你的預訂表單</h3>
-          <p>登入、系所選擇與年級選擇流程已可正常切換。之後可以把這個區塊替換成 Google Form 或自行建立的訂書欄位。</p>
-        </div>
+        <p class="eyebrow">教科書預訂</p>
+        <h2 id="formTitle">載入中…</h2>
+        <p id="formDescription" class="muted"></p>
+
+        <div id="statusBanner" class="status-banner" role="status" aria-live="polite" hidden></div>
+
+        <form id="orderForm" class="selection-card" novalidate hidden>
+          <div id="fieldContainer"></div>
+          <div class="button-row">
+            <button id="saveDraftButton" class="ghost-button" type="button">儲存草稿</button>
+            <button id="submitButton" class="primary-button" type="submit">送出預訂</button>
+          </div>
+        </form>
       </div>
     </main>
+
+    <script type="module" src="js/form.js"></script>
     <script src="availability.js"></script>
   </body>
 </html>
