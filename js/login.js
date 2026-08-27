@@ -124,6 +124,8 @@ forgotButton.addEventListener('click', async () => {
 
 // --- Boot -------------------------------------------------------------
 async function boot() {
+  passwordForm.hidden = true;
+  passwordForm.previousElementSibling?.toggleAttribute('hidden', true);
   const reason = new URLSearchParams(window.location.search).get('reason');
   if (reason) {
     showStatus(reason);
