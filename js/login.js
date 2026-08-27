@@ -2,6 +2,7 @@
 
 import {
   AuthError,
+  completeOAuthRedirect,
   loadAuthState,
   provisionGoogleStudent,
   requestPasswordReset,
@@ -141,6 +142,7 @@ async function boot() {
   }
 
   try {
+    await completeOAuthRedirect();
     let state = await loadAuthState();
     if (state.hasSession && !state.admin && !state.profile) {
       await provisionGoogleStudent();
