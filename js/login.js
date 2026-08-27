@@ -2,10 +2,10 @@
 
 import {
   AuthError,
-  completeGoogleSignIn,
   loadAuthState,
-  mountGoogleButton,
+  provisionGoogleStudent,
   requestPasswordReset,
+  signInWithGoogle,
   signInWithPassword,
   signOut,
 } from './auth.js';
@@ -22,6 +22,7 @@ const passwordInput = document.querySelector('#password');
 const forgotButton = document.querySelector('#forgotPassword');
 const googleSlot = document.querySelector('#googleButton');
 const googleFallback = document.querySelector('#googleFallback');
+let googleLoginButton;
 
 function showStatus(code, tone = 'error') {
   banner.textContent = messageFor(code);
@@ -39,6 +40,7 @@ function setBusy(busy) {
   loader.toggleAttribute('data-active', busy);
   loginButton.disabled = busy;
   forgotButton.disabled = busy;
+  if (googleLoginButton) googleLoginButton.disabled = busy;
   loginButton.textContent = busy ? '登入中…' : '登入';
 }
 
@@ -60,21 +62,27 @@ function handleError(error) {
   setBusy(false);
 }
 
-// --- Google -----------------------------------------------------------
-
-async function onGoogleCredential(credential, nonce) {
+async function startGoogleSignIn() {
   clearStatus();
   setBusy(true);
   try {
-    await completeGoogleSignIn(credential, nonce);
-    await routeFrom(await loadAuthState());
+    await signInWithGoogle();
   } catch (error) {
     handleError(error);
   }
 }
 
-// --- Password ---------------------------------------------------------
+function mountGoogleLoginButton() {
+  googleSlot.replaceChildren();
+  googleLoginButton = document.createElement('button');
+  googleLoginButton.type = 'button';
+  googleLoginButton.className = 'primary-button google-oauth-button';
+  googleLoginButton.textContent = '使用成大 Google 帳號登入';
+  googleLoginButton.addEventListener('click', startGoogleSignIn);
+  googleSlot.append(googleLoginButton);
+}
 
+// --- Password ---------------------------------------------------------
 passwordForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   clearStatus();
@@ -89,8 +97,6 @@ passwordForm.addEventListener('submit', async (event) => {
   setBusy(true);
   try {
     await signInWithPassword(email, password);
-    // Authenticating is not authorization: routeFrom re-reads admin_users /
-    // student_profiles and signs the user back out if neither qualifies.
     await routeFrom(await loadAuthState());
   } catch (error) {
     handleError(error);
@@ -112,13 +118,11 @@ forgotButton.addEventListener('click', async () => {
     handleError(error);
     return;
   }
-  // Identical response whether or not the address exists.
   setBusy(false);
   showStatus('reset_sent', 'info');
 });
 
 // --- Boot -------------------------------------------------------------
-
 async function boot() {
   const reason = new URLSearchParams(window.location.search).get('reason');
   if (reason) {
@@ -134,12 +138,16 @@ async function boot() {
     return;
   }
 
-  // Already signed in? Skip the form.
   try {
-    const state = await loadAuthState();
+    let state = await loadAuthState();
+    if (state.hasSession && !state.admin && !state.profile) {
+      await provisionGoogleStudent();
+      state = await loadAuthState();
+    }
     if (state.hasSession) {
       setBusy(true);
       await routeFrom(state);
+      return;
     }
   } catch {
     await signOut();
@@ -148,16 +156,12 @@ async function boot() {
   if (!isGoogleConfigured()) {
     googleFallback.hidden = false;
     googleFallback.textContent = messageFor('not_configured');
+    setBusy(false);
     return;
   }
 
-  try {
-    await mountGoogleButton(googleSlot, onGoogleCredential, handleError);
-  } catch (error) {
-    googleFallback.hidden = false;
-    googleFallback.textContent = messageFor(error instanceof AuthError ? error.code : 'google_unavailable');
-  }
+  mountGoogleLoginButton();
+  setBusy(false);
 }
 
-setBusy(false);
 boot();
