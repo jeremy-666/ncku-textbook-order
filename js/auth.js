@@ -16,9 +16,17 @@ let client;
 export function supabase() {
   if (!isConfigured()) throw new AuthError('not_configured');
   client ??= createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
   });
   return client;
+}
+
+export async function completeOAuthRedirect() {
+  const code = new URLSearchParams(window.location.search).get('code');
+  if (!code) return;
+  const { error } = await supabase().auth.exchangeCodeForSession(code);
+  if (error) throw new AuthError(codeForError(error), error);
+  history.replaceState(null, '', window.location.pathname);
 }
 
 export async function getSession() {
