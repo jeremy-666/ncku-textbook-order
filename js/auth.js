@@ -16,17 +16,9 @@ let client;
 export function supabase() {
   if (!isConfigured()) throw new AuthError('not_configured');
   client ??= createClient(config.supabaseUrl, config.supabaseAnonKey, {
-    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, flowType: 'pkce' },
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true, flowType: 'pkce' },
   });
   return client;
-}
-
-export async function completeOAuthRedirect() {
-  const code = new URLSearchParams(window.location.search).get('code');
-  if (!code) return;
-  const { error } = await supabase().auth.exchangeCodeForSession(code);
-  if (error) throw new AuthError(codeForError(error), error);
-  history.replaceState(null, '', window.location.pathname);
 }
 
 export async function getSession() {
@@ -63,27 +55,6 @@ export async function signInWithGoogle() {
       queryParams: { hd: config.hostedDomain, prompt: 'select_account' },
     },
   });
-  if (error) throw new AuthError(codeForError(error), error);
-}
-
-export async function provisionGoogleStudent() {
-  const { error } = await supabase().rpc('provision_google_student');
-  if (error) throw new AuthError(codeForError(error), error);
-}
-
-export async function signInWithPassword(email, password) {
-  const { error } = await supabase().auth.signInWithPassword({ email: email.trim(), password });
-  if (error) throw new AuthError(codeForError(error), error);
-}
-
-export async function requestPasswordReset(email) {
-  const redirectTo = new URL('reset-password.html', window.location.href).toString();
-  const { error } = await supabase().auth.resetPasswordForEmail(email.trim(), { redirectTo });
-  if (error && codeForError(error) === 'network_error') throw new AuthError('network_error', error);
-}
-
-export async function updatePassword(password) {
-  const { error } = await supabase().auth.updateUser({ password });
   if (error) throw new AuthError(codeForError(error), error);
 }
 
