@@ -1,0 +1,8 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "still-grass-300b",
+  "compatibility_date": "2026-08-28",
+  "assets": {
+    "directory": "."
+  }
+}
