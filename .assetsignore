@@ -1,0 +1,13 @@
+.git/
+.github/
+supabase/
+tests/
+docs/
+node_modules/
+.env
+.env.*
+*.md
+package.json
+package-lock.json
+wrangler.jsonc
+.gitignore
