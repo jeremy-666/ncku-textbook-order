@@ -22,22 +22,29 @@ function setBusy(busy) {
   if (googleButton) googleButton.disabled = busy;
 }
 
-function callbackCode() {
-  return new URL(window.location.href).searchParams.get('code');
+function callbackParams() {
+  const url = new URL(window.location.href);
+  return {
+    code: url.searchParams.get('code'),
+    flowId: url.searchParams.get('sb_flow_id'),
+  };
 }
 
 function clearCallbackCode() {
   const url = new URL(window.location.href);
-  if (!url.searchParams.has('code')) return;
   url.searchParams.delete('code');
+  url.searchParams.delete('sb_flow_id');
   window.history.replaceState({}, '', url);
 }
 
 async function completeGoogleCallback() {
-  const code = callbackCode();
+  const { code, flowId } = callbackParams();
   if (!code) return;
 
-  const { error } = await supabase().auth.exchangeCodeForSession(code);
+  const { error } = await supabase().auth.exchangeCodeForSession(
+    code,
+    flowId ? { flowId } : undefined,
+  );
   if (error) throw new AuthError(codeForError(error), error);
 }
 
