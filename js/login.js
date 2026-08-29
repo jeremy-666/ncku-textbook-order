@@ -22,6 +22,10 @@ function setBusy(busy) {
   if (googleButton) googleButton.disabled = busy;
 }
 
+function callbackCode() {
+  return new URL(window.location.href).searchParams.get('code');
+}
+
 function clearCallbackCode() {
   const url = new URL(window.location.href);
   if (!url.searchParams.has('code')) return;
@@ -29,27 +33,30 @@ function clearCallbackCode() {
   window.history.replaceState({}, '', url);
 }
 
+async function completeGoogleCallback() {
+  const code = callbackCode();
+  if (!code) return;
+
+  const { error } = await supabase().auth.exchangeCodeForSession(code);
+  if (error) throw new AuthError(codeForError(error), error);
+}
+
 async function continueAfterSignIn() {
-  try {
-    const state = await loadAuthState();
-    if (!state.hasSession) {
-      setBusy(false);
-      return;
-    }
-
-    const { route, reason } = resolveDestination(state);
-    if (!route || route === ROUTES.LOGIN) {
-      showStatus(reason);
-      setBusy(false);
-      return;
-    }
-
-    clearCallbackCode();
-    window.location.replace(route);
-  } catch (error) {
-    showStatus(error instanceof AuthError ? error.code : codeForError(error));
+  const state = await loadAuthState();
+  if (!state.hasSession) {
     setBusy(false);
+    return;
   }
+
+  const { route, reason } = resolveDestination(state);
+  if (!route || route === ROUTES.LOGIN) {
+    showStatus(reason);
+    setBusy(false);
+    return;
+  }
+
+  clearCallbackCode();
+  window.location.replace(route);
 }
 
 async function startGoogleSignIn() {
@@ -86,13 +93,13 @@ async function boot() {
   mountGoogleButton();
   setBusy(true);
 
-  supabase().auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
-      window.setTimeout(continueAfterSignIn, 0);
-    }
-  });
-
-  await continueAfterSignIn();
+  try {
+    await completeGoogleCallback();
+    await continueAfterSignIn();
+  } catch (error) {
+    showStatus(error instanceof AuthError ? error.code : codeForError(error));
+    setBusy(false);
+  }
 }
 
 boot();
