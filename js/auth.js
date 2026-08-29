@@ -20,7 +20,8 @@ export function supabase() {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
-      detectSessionInUrl: true,
+      // login.js exchanges the OAuth callback code before reading the session.
+      detectSessionInUrl: false,
       flowType: 'pkce',
     },
   });
